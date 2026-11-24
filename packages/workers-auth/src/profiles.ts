@@ -191,9 +191,13 @@ function getProfileForDirectoryFromBindings(
 		if (normalizedDir === boundDir) {
 			return { profile, dir: boundDir };
 		}
+		// A binding at a filesystem root (`/`, `C:\`) already ends with the
+		// separator, so the boundary is the end of `boundDir` itself rather
+		// than the next character.
 		if (
 			normalizedDir.startsWith(boundDir) &&
-			normalizedDir[boundDir.length] === path.sep
+			(boundDir.endsWith(path.sep) ||
+				normalizedDir[boundDir.length] === path.sep)
 		) {
 			return { profile, dir: boundDir };
 		}

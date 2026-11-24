@@ -86,4 +86,39 @@ describe.each([
 			"work"
 		);
 	});
+
+	it("should apply a binding at the filesystem root to every directory", ({
+		expect,
+	}) => {
+		const root = path.parse(process.cwd()).root;
+		profiles.bindings.activate("everywhere", root);
+
+		// A more specific binding (set up in beforeEach) still wins...
+		expect(profiles.resolve({ cwd: process.cwd() })).toBe("personal");
+		// ...but anything not otherwise bound now inherits the root binding,
+		// including deeply nested and top-level directories.
+		expect(profiles.resolve({ cwd: path.join(root, "some", "project") })).toBe(
+			"everywhere"
+		);
+		expect(profiles.resolve({ cwd: path.join(root, "tmp") })).toBe(
+			"everywhere"
+		);
+		expect(profiles.resolve({ cwd: root })).toBe("everywhere");
+		expect(profiles.bindings.getProfileForDirectory(root)).toBe("everywhere");
+	});
+
+	it("should fall back to the root binding after deactivating a nested one", ({
+		expect,
+	}) => {
+		const root = path.parse(process.cwd()).root;
+		profiles.bindings.activate("everywhere", root);
+
+		expect(profiles.bindings.deactivate(process.cwd())).toEqual({
+			removedProfile: "personal",
+			newResolution: {
+				profile: "everywhere",
+				source: `inherited from ${root}`,
+			},
+		});
+	});
 });
